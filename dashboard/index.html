@@ -306,51 +306,22 @@ table.innerHTML+=row;
 
 }
 
-async function loadRiskChart(){
+async function loadRiskChart() {
+  const res = await fetch("/api/admin/risk-distribution");
+  const data = await res.json();
 
-const res = await fetch("/api/admin/risk-distribution",{
-headers:{ Authorization:`Bearer ${TOKEN}` }
-});
+  const labels = data.risk_distribution.map(r => r.risk_level);
+  const values = data.risk_distribution.map(r => Number(r.count));
 
-const data = await res.json();
-
-const labels=data.risk_distribution.map(r=>r.risk_level);
-const counts=data.risk_distribution.map(r=>Number(r.count));
-
-new Chart(document.getElementById("riskChart"),{
-type:"pie",
-data:{
-labels:labels,
-datasets:[{data:counts}]
-}
-});
-
-}
-
-async function loadDecisionChart(){
-
-const res = await fetch("/api/admin/stats",{
-headers:{ Authorization:`Bearer ${TOKEN}` }
-});
-
-const data = await res.json();
-
-let approve=0;
-let decline=0;
-
-data.decision_breakdown.forEach(d=>{
-if(d.decision==="APPROVE") approve=Number(d.count);
-if(d.decision==="DECLINE") decline=Number(d.count);
-});
-
-new Chart(document.getElementById("decisionChart"),{
-type:"bar",
-data:{
-labels:["Approve","Decline"],
-datasets:[{data:[approve,decline]}]
-}
-});
-
+  new Chart(document.getElementById("riskChart"), {
+    type: "pie",
+    data: {
+      labels: labels,
+      datasets: [{
+        data: values
+      }]
+    }
+  });
 }
 
 async function loadExposure(){
@@ -555,6 +526,19 @@ renderTimeline(data.loan_history);
 
 } // closes checkCredit()
 
+async function loadExposure() {
+  const res = await fetch("/api/admin/loans");
+  const data = await res.json();
+
+  let total = 0;
+
+  data.loans.forEach(l => {
+    total += Number(l.balance);
+  });
+
+  document.getElementById("loanExposure").innerText =
+    total.toLocaleString();
+}
 
 // load dashboard when page opens
 loadDashboard();
